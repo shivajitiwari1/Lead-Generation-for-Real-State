@@ -122,6 +122,7 @@ export default function LeadsPage() {
       const data = await res.json()
       if (data.success) {
         setSearchMsg(`✅ ${data.data.message}`)
+        setSearchOpen(false)
         fetchLeads()
       } else {
         setSearchMsg(`❌ ${data.error}`)
@@ -162,10 +163,6 @@ export default function LeadsPage() {
                 <Download className="mr-1 h-3.5 w-3.5" /> Export CSV
               </Button>
             </a>
-            <Button size="sm" className="bg-purple-600 hover:bg-purple-700"
-              onClick={() => setShowForm(true)}>
-              <Plus className="mr-1 h-3.5 w-3.5" /> Add Lead
-            </Button>
             <Button variant="outline" size="sm"
               className="border-gray-700 text-gray-300 hover:bg-gray-800"
               onClick={() => setSearchOpen(o => !o)}>
