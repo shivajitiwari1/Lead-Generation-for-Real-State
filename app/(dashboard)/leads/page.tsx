@@ -270,25 +270,11 @@ export default function LeadsPage() {
 
             {/* Action buttons */}
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <Button size="sm" variant="outline" disabled={searching}
-                className="border-gray-700 text-gray-300 hover:bg-gray-800"
-                onClick={() => runSearch("first")}>
-                {searching ? "Searching…" : "Search 1st selected"}
-              </Button>
               <Button size="sm" disabled={searching}
-                className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => runSearch("all_sources")}>
-                {searching ? "Searching…" : `Search ALL ${SOURCES.length} Sources`}
-              </Button>
-              <Button size="sm" disabled={searching}
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => runSearch("combinations")}>
-                🔀 Search All Combinations ({Math.max(1, selBizTypes.length)}×{Math.max(1, selStates.length)}×{Math.max(1, selSources.length)})
-              </Button>
-              <Button size="sm" disabled={searching}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 px-5"
                 onClick={() => runSearch("auto")}>
-                <Zap className="mr-1 h-3.5 w-3.5" /> {searching ? "Working…" : "Auto Search + Analyze + Score"}
+                <Zap className="mr-1.5 h-3.5 w-3.5" />
+                {searching ? "Working…" : "Auto Search + Analyze + Score"}
               </Button>
               {searchMsg && (
                 <span className={`text-xs px-3 py-1 rounded-full ${searchMsg.startsWith("✅") ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
