@@ -36,8 +36,9 @@ function randInt(min: number, max: number): number { return Math.floor(Math.rand
 
 function generatePhone(): string {
   const prefix = rand(PHONE_PREFIXES)
-  const rest = String(randInt(10000000, 99999999))
-  return prefix + rest
+  const part1 = String(randInt(1000, 9999))
+  const part2 = String(randInt(10000, 99999))
+  return prefix + part1 + part2
 }
 
 function generateEmail(name: string, company: string): string {
@@ -145,14 +146,30 @@ export async function POST(request: NextRequest) {
   const capped = combos.slice(0, 20)
   const newLeads: any[] = []
 
+  // Track phones + emails used in THIS batch to prevent within-batch duplicates
+  const usedPhones = new Set<string>()
+  const usedEmails = new Set<string>()
+
   for (const [biz, loc, src] of capped) {
     const count = mode === "auto" ? randInt(4,8) : randInt(3,6)
-    for (let i = 0; i < count; i++) {
+    let attempts = 0
+    let added = 0
+    while (added < count && attempts < count * 5) {
+      attempts++
       const lead = generateLead(biz, loc, src)
-      if (!(await isDuplicate(lead.email, lead.phone))) {
-        await appendItem("leads", lead)
-        newLeads.push(lead)
-      }
+
+      // Skip if phone already used in this batch
+      if (lead.phone && usedPhones.has(lead.phone)) continue
+      // Skip if email already used in this batch
+      if (lead.email && usedEmails.has(lead.email)) continue
+      // Skip if already exists in DB
+      if (await isDuplicate(lead.email, lead.phone)) continue
+
+      usedPhones.add(lead.phone)
+      if (lead.email) usedEmails.add(lead.email)
+      await appendItem("leads", lead)
+      newLeads.push(lead)
+      added++
     }
   }
 
