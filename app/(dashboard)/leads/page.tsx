@@ -51,6 +51,8 @@ export default function LeadsPage() {
   const [page, setPage] = useState(1)
   const [showForm, setShowForm] = useState(false)
   const [searchOpen, setSearchOpen] = useState(true)
+  const [searching, setSearching] = useState(false)
+  const [searchMsg, setSearchMsg] = useState("")
 
   // Search panel state
   const [selBizTypes, setSelBizTypes] = useState<string[]>([])
@@ -102,6 +104,35 @@ export default function LeadsPage() {
   const combinations = Math.max(1, selBizTypes.length) *
     Math.max(1, selStates.length) *
     Math.max(1, selSources.length)
+
+  async function runSearch(mode: "first" | "all_sources" | "combinations" | "auto") {
+    const bizTypes  = selBizTypes.length  ? selBizTypes  : [BUSINESS_TYPES[0]]
+    const locations = selStates.length    ? selStates    : ["Delhi"]
+    const sources   = selSources.length   ? selSources   : [SOURCES[0]]
+    const body = { bizTypes, locations, sources, mode }
+    setSearching(true)
+    setSearchMsg("Searching leads…")
+    try {
+      const res = await fetch("/api/leads/search", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSearchMsg(`✅ ${data.data.message}`)
+        fetchLeads()
+      } else {
+        setSearchMsg(`❌ ${data.error}`)
+      }
+    } catch (e) {
+      setSearchMsg("❌ Search failed")
+    } finally {
+      setSearching(false)
+      setTimeout(() => setSearchMsg(""), 4000)
+    }
+  }
 
   async function handleStatusChange(id: string, status: string) {
     await api.leads.update(id, { status: status as any })
@@ -241,27 +272,32 @@ export default function LeadsPage() {
             </div>
 
             {/* Action buttons */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              <Button size="sm" variant="outline"
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Button size="sm" variant="outline" disabled={searching}
                 className="border-gray-700 text-gray-300 hover:bg-gray-800"
-                onClick={() => alert("Scraping coming in Plan 3")}>
-                Search 1st selected
+                onClick={() => runSearch("first")}>
+                {searching ? "Searching…" : "Search 1st selected"}
               </Button>
-              <Button size="sm"
+              <Button size="sm" disabled={searching}
                 className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => alert("Scraping coming in Plan 3")}>
-                Search ALL {SOURCES.length} Sources
+                onClick={() => runSearch("all_sources")}>
+                {searching ? "Searching…" : `Search ALL ${SOURCES.length} Sources`}
               </Button>
-              <Button size="sm"
+              <Button size="sm" disabled={searching}
                 className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => alert("Scraping coming in Plan 3")}>
+                onClick={() => runSearch("combinations")}>
                 🔀 Search All Combinations ({Math.max(1, selBizTypes.length)}×{Math.max(1, selStates.length)}×{Math.max(1, selSources.length)})
               </Button>
-              <Button size="sm"
+              <Button size="sm" disabled={searching}
                 className="bg-green-600 hover:bg-green-700"
-                onClick={() => alert("AI automation coming in Plan 2 + 3")}>
-                <Zap className="mr-1 h-3.5 w-3.5" /> Auto Search + Analyze + Score
+                onClick={() => runSearch("auto")}>
+                <Zap className="mr-1 h-3.5 w-3.5" /> {searching ? "Working…" : "Auto Search + Analyze + Score"}
               </Button>
+              {searchMsg && (
+                <span className={`text-xs px-3 py-1 rounded-full ${searchMsg.startsWith("✅") ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
+                  {searchMsg}
+                </span>
+              )}
             </div>
           </div>
         )}
