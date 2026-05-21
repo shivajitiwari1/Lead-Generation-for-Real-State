@@ -1,20 +1,20 @@
 import * as jose from "jose"
 import bcrypt from "bcryptjs"
 
-const JWT_SECRET = process.env.JWT_SECRET ?? ""
 const JWT_ALGORITHM = "HS256" as const
 const JWT_EXPIRE_HOURS = parseInt(process.env.JWT_EXPIRE_HOURS ?? "24", 10)
 
-if (!JWT_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET env var must be set in production")
+function getSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("JWT_SECRET env var must be set in production")
+    }
+    console.warn("JWT_SECRET is not set — using insecure dev default")
+    return new TextEncoder().encode("dev-secret-not-for-production")
+  }
+  return new TextEncoder().encode(secret)
 }
-if (!JWT_SECRET) {
-  console.warn("JWT_SECRET is not set — using insecure dev default")
-}
-
-const _secret = new TextEncoder().encode(
-  JWT_SECRET || "dev-secret-not-for-production"
-)
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12)
@@ -36,14 +36,14 @@ export async function createToken(
     .setProtectedHeader({ alg: JWT_ALGORITHM })
     .setExpirationTime(`${hours}h`)
     .setIssuedAt()
-    .sign(_secret)
+    .sign(getSecret())
 }
 
 export async function decodeToken(
   token: string
 ): Promise<Record<string, unknown> | null> {
   try {
-    const { payload } = await jose.jwtVerify(token, _secret, {
+    const { payload } = await jose.jwtVerify(token, getSecret(), {
       algorithms: [JWT_ALGORITHM],
     })
     return payload as Record<string, unknown>
