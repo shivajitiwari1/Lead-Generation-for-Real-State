@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server"
-import { verifyPassword, createToken } from "@/lib/server/auth-utils"
-import { readJson } from "@/lib/server/json-service"
+import { hashPassword, verifyPassword, createToken } from "@/lib/server/auth-utils"
+import { readJson, writeJson } from "@/lib/server/json-service"
 import { ok, err } from "@/lib/server/api-helpers"
+import { v4 as uuidv4 } from "uuid"
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
@@ -13,7 +14,20 @@ export async function POST(request: NextRequest) {
     ? { users: [], daily_email_count: 0, daily_email_date: "" }
     : settings
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const users: any[] = data.users ?? []
+  let users: any[] = data.users ?? []
+
+  // First-run: auto-create account if no users exist yet
+  if (users.length === 0) {
+    const newUser = {
+      id: uuidv4(),
+      username,
+      hashed_password: await hashPassword(password),
+      created_at: new Date().toISOString(),
+    }
+    users = [newUser]
+    data.users = users
+    await writeJson("settings", data)
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const user = users.find((u: any) => u.username === username)
