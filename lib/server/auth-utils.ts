@@ -5,14 +5,7 @@ const JWT_ALGORITHM = "HS256" as const
 const JWT_EXPIRE_HOURS = parseInt(process.env.JWT_EXPIRE_HOURS ?? "24", 10)
 
 function getSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET
-  if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("JWT_SECRET env var must be set in production")
-    }
-    console.warn("JWT_SECRET is not set — using insecure dev default")
-    return new TextEncoder().encode("dev-secret-not-for-production")
-  }
+  const secret = process.env.JWT_SECRET || "lead-crm-demo-secret-2026"
   return new TextEncoder().encode(secret)
 }
 

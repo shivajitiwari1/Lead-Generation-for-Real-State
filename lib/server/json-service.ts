@@ -2,7 +2,10 @@ import { promises as fs } from "fs"
 import path from "path"
 
 function dataPath(collection: string): string {
-  const dir = process.env.DATA_DIR ?? path.join(process.cwd(), "data")
+  const defaultDir = process.env.NODE_ENV === "production"
+    ? "/tmp"
+    : path.join(process.cwd(), "data")
+  const dir = process.env.DATA_DIR ?? defaultDir
   return path.join(dir, `${collection}.json`)
 }
 
